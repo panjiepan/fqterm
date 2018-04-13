@@ -1354,7 +1354,6 @@ void FQTermFrame::addMainTool() {
   toolBarMdiConnectTools_->addAction(getAction(FQTermShortcutHelper::ANTIIDLE));
   toolBarMdiConnectTools_->addAction(getAction(FQTermShortcutHelper::AUTOREPLY));
   toolBarMdiConnectTools_->addAction(getAction(FQTermShortcutHelper::VIEWMESSAGE));
-  toolBarMdiConnectTools_->addAction(getAction(FQTermShortcutHelper::IMAGEVIEWER));
   toolBarMdiConnectTools_->addAction(getAction(FQTermShortcutHelper::MOUSESUPPORT));
   toolBarMdiConnectTools_->addAction(getAction(FQTermShortcutHelper::BEEP));
   toolBarMdiConnectTools_->addAction(getAction(FQTermShortcutHelper::AUTORECONNECT));
