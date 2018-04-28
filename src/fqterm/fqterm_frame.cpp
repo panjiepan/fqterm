@@ -674,6 +674,11 @@ void FQTermFrame::disconnect() {
   }
 }
 
+void FQTermFrame::conn_info()
+{
+	FQTermSession *sess = windowManager_->activeWindow()->getSession();
+}
+
 void FQTermFrame::copy() {
   windowManager_->activeWindow()->copy();
 }
@@ -1381,6 +1386,7 @@ void FQTermFrame::addMainMenu() {
 
   FQTERM_ADDACTION(menuFile_, CONNECT, this, connectIt);
   FQTERM_ADDACTION(menuFile_, DISCONNECT, this, disconnect);
+  FQTERM_ADDACTION(menuFile_, CONN_INFO, this, conn_info);
   menuFile_->addSeparator();
   FQTERM_ADDACTION(menuFile_, ADDRESSBOOK, this, addressBook);
   FQTERM_ADDACTION(menuFile_, QUICKLOGIN, this, quickLogin);
