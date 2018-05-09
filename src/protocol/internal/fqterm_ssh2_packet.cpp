@@ -23,7 +23,7 @@
 #include "fqterm_ssh2_packet.h"
 
 #include "fqterm_serialization.h"
-#include "crc32.h"
+#include "buffer.h"
 
 namespace FQTerm {
 //==============================================================================
@@ -90,23 +90,16 @@ void FQTermSSH2PacketSender::makePacket() {
     const unsigned char *packet = output_buffer_->data();
     int len = output_buffer_->len();
 
-    FQTermSSHBuffer buffer(4 + len);
-    buffer.putInt(sequence_no_);
-    buffer.putRawData((const char *)packet, len);
+    buffer mbuffer;
+    uint8_t digest[MAX_DGSTLEN];
 
-    std::vector<u_char> digest(mac->dgstSize);
-    mac->getmac(mac, buffer.data(), buffer.len(), &digest[0]);
+    buffer_init(&mbuffer);
+    buffer_append_be32(&mbuffer, sequence_no_);
+    buffer_append(&mbuffer, packet, len);
+    mac->getmac(mac, buffer_data(&mbuffer), buffer_len(&mbuffer), digest);
 
-    FQ_TRACE("ssh2packet", 9) << "Making packets...";
-    FQ_TRACE("ssh2packet", 9) << "Append MAC with sequence_no_" << sequence_no_; 
-    FQ_TRACE("ssh2packet", 9) << "Compute MAC with " 
-                              << buffer.len() << " bytes data:\n" 
-                              << dumpHexString << std::string((char *)buffer.data(), buffer.len());
-    FQ_TRACE("ssh2packet", 9) << "MAC data " 
-                              << digest.size() << " bytes:\n" 
-                              << dumpHexString << std::string((const char *)&digest[0], digest.size());
- 
-    output_buffer_->putRawData((const char *)&digest[0], digest.size());
+    output_buffer_->putRawData((const char*)digest, mac->dgstSize);
+    buffer_deinit(&mbuffer);
   }
 
   if (is_compressed_) {
@@ -192,23 +185,26 @@ void FQTermSSH2PacketReceiver::parseData(FQTermSSHBuffer *input) {
       FQ_VERIFY(cipher->crypt(cipher, tmp, tmp, left_len)==1);
     }
 
-    // 3. check MAC
+	// 3. check MAC
     if (is_mac_) {
-		int digest_len = mac->dgstSize;
-		std::vector<u_char> digest(digest_len);
+	    int digest_len = mac->dgstSize;
+	    uint8_t digest[MAX_DGSTLEN];
 
-		FQTermSSHBuffer buffer(4 + expected_input_len - digest_len);
-		buffer.putInt(sequence_no_);
-		buffer.putRawData((const char *)input->data(), expected_input_len - digest_len);
-		mac->getmac(mac, buffer.data(), buffer.len(), &digest[0]);
+	    buffer mbuf;
+	    buffer_init(&mbuf);
+	    buffer_append_be32(&mbuf, sequence_no_);
+	    buffer_append(&mbuf, (const uint8_t*)input->data(),
+			    expected_input_len - digest_len);
+	    mac->getmac(mac, buffer_data(&mbuf), buffer_len(&mbuf), digest);
+	    buffer_deinit(&mbuf);
 
-		u_char *received_digest = input->data() + expected_input_len - digest_len;
+	    u_char *received_digest = input->data() + expected_input_len - digest_len;
 
-		if (memcmp(&digest[0], received_digest, digest_len) != 0) {
-			emit packetError("incorrect MAC.");
-			return ;
-		}
-	}
+	    if (memcmp(digest, received_digest, digest_len) != 0) {
+		    emit packetError("incorrect MAC.");
+		    return ;
+	    }
+    }
 
     // 4. get every field of the ssh packet.
     packet_len = input->getInt();
