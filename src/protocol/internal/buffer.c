@@ -41,11 +41,35 @@ int buffer_append(buffer *b, const uint8_t *s, size_t len)
 	}
 }
 
+int buffer_append_string(buffer *b, const char *s, size_t len)
+{
+	uint32_t beint = htobe32(len);
+	if (ensure(b, len + 4)) {
+		*(uint32_t*)(b->p + b->offs + b->sz) = beint;
+		memcpy(b->p + b->offs + b->sz + 4, s, len);
+		b->sz += len + 4;
+		return 1;
+	} else {
+		return 0;
+	}
+}
+
 int buffer_append_byte(buffer *b, uint8_t x)
 {
 	if (ensure(b, 1)) {
 		b->p[b->offs + b->sz] = x;
 		b->sz += 1;
+	} else {
+		return 0;
+	}
+}
+
+int buffer_append_be16(buffer *b, uint16_t x)
+{
+	uint16_t beint = htobe16(x);
+	if (ensure(b, 2)) {
+		*(uint16_t*)(b->p + b->offs + b->sz) = beint;
+		b->sz += 2;
 	} else {
 		return 0;
 	}
