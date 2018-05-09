@@ -67,7 +67,7 @@ void FQTermSSH1Channel::changeTermSize(int col, int row) {
 void FQTermSSH1Channel::sendData(const char *data, int len) {
   packet_sender_->startPacket(SSH1_CMSG_STDIN_DATA);
   packet_sender_->putInt(len);
-  packet_sender_->putRawData(data, len);
+  packet_sender_->putRawData((const uint8_t *)data, len);
   packet_sender_->write();
 }
 
