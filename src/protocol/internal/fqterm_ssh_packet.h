@@ -86,7 +86,7 @@ class FQTermSSHPacketSender: public QObject {
 class FQTermSSHPacketReceiver: public QObject {
   Q_OBJECT;
  public:
-  FQTermSSHBuffer *buffer_;
+  buffer recvbuf;
   ssh_cipher_t *cipher;
   ssh_mac_t *mac;
 

@@ -128,7 +128,7 @@ bool FQTermSSH2Kex::negotiateAlgorithms() {
   delete[] I_S_;
   I_S_ = new char[I_S_len_];
   I_S_[0] = SSH2_MSG_KEXINIT;
-  memcpy(I_S_ + 1, packet_receiver_->buffer_->data(), I_S_len_ - 1);
+  memcpy(I_S_ + 1, buffer_data(&packet_receiver_->recvbuf), I_S_len_ - 1);
 
   // 1. Parse server kex init packet
   packet_receiver_->getRawData((char*)cookie_, 16);

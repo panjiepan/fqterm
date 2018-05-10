@@ -129,8 +129,9 @@ void FQTermSSHPacketSender::resetMac() {
 //FQTermSSHPacketReceiver
 //==============================================================================
 
-FQTermSSHPacketReceiver::FQTermSSHPacketReceiver() {
-  buffer_ = new FQTermSSHBuffer(1024);
+FQTermSSHPacketReceiver::FQTermSSHPacketReceiver()
+{
+	buffer_init(&recvbuf);
 
   is_decrypt_ = false;
   cipher_type_ = SSH_CIPHER_NONE;
@@ -146,35 +147,79 @@ FQTermSSHPacketReceiver::FQTermSSHPacketReceiver() {
 
 FQTermSSHPacketReceiver::~FQTermSSHPacketReceiver()
 {
-	delete buffer_;
+	buffer_deinit(&recvbuf);
 	if (cipher)
 		cipher->cleanup(cipher);
         if (mac)
 		mac->cleanup(mac);
 }
 
-void FQTermSSHPacketReceiver::getRawData(char *data, int length) {
-  buffer_->getRawData(data, length);
+void FQTermSSHPacketReceiver::getRawData(char *data, int length)
+{
+	if (buffer_len(&recvbuf) >= length)
+		buffer_get(&recvbuf, (uint8_t*)data, length);
+	else
+		emit packetError("Read too many bytes!");
 }
 
-u_char FQTermSSHPacketReceiver::getByte() {
-  return buffer_->getByte();
+u_char FQTermSSHPacketReceiver::getByte()
+{
+	if (buffer_len(&recvbuf) >= 1)
+		return buffer_get_u8(&recvbuf);
+	else
+		emit packetError("Read too many bytes!");
 }
 
-u_int FQTermSSHPacketReceiver::getInt() {
-  return buffer_->getInt();
+u_int FQTermSSHPacketReceiver::getInt()
+{
+	if (buffer_len(&recvbuf) >= 4)
+		return buffer_get_u32(&recvbuf);
+	else
+		emit packetError("Read too many bytes!");
 }
 
-void *FQTermSSHPacketReceiver::getString(int *length) {
-  return buffer_->getString(length);
+void *FQTermSSHPacketReceiver::getString(int *length)
+{
+	uint32_t l = getInt();
+	char *data = new char[l+1];
+	getRawData(data, l);
+	data[l] = 0;
+	if (length != NULL)
+		*length = l;
+	return data;
 }
 
-void FQTermSSHPacketReceiver::getBN(BIGNUM *bignum) {
-  buffer_->getSSH1BN(bignum);
+void FQTermSSHPacketReceiver::getBN(BIGNUM *bignum)
+{
+	int bits, bytes;
+	u_char buf[2];
+	u_char *bin;
+
+	// Get the number for bits.
+	if (buffer_len(&recvbuf) >= 2) {
+		bits = buffer_get_u16(&recvbuf);
+	} else {
+		emit packetError("Read too many bytes!");
+		return;
+	}
+	// Compute the number of binary bytes that follow.
+	bytes = (bits + 7) / 8;
+	if (bytes > 8 *1024) {
+		emit packetError("Can't handle BN of size!");
+		return ;
+	}
+	if (buffer_len(&recvbuf) < bytes) {
+		emit packetError("The input buffer is too small!");
+		return ;
+	}
+	bin = buffer_data(&recvbuf);
+	BN_bin2bn(bin, bytes, bignum);
+	buffer_consume(&recvbuf, bytes);
 }
 
-void FQTermSSHPacketReceiver::consume(int len) {
-  buffer_->consume(len);
+void FQTermSSHPacketReceiver::consume(int len)
+{
+	buffer_consume(&recvbuf, len);
 }
 
 void FQTermSSHPacketReceiver::startEncryption(const u_char *key, const u_char *IV) {

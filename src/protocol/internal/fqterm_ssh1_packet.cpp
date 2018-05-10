@@ -107,7 +107,7 @@ void FQTermSSH1PacketReceiver::parseData(FQTermSSHBuffer *input) {
     u_int padding_len = total_len - real_data_len_;
 
     real_data_len_ -= 5;
-    buffer_->clear();
+    buffer_clear(&recvbuf);
 
     // Get the data of the packet.
     if (input->len() - 4 < (long)total_len) {
@@ -128,12 +128,12 @@ void FQTermSSH1PacketReceiver::parseData(FQTermSSHBuffer *input) {
 	    memcpy(targetData, sourceData, total_len);
     }
 
-    buffer_->putRawData((char*)targetData, total_len);
+    buffer_append(&recvbuf, targetData, total_len);
 
     // Check the crc32.
-    buf = buffer_->data() + total_len - 4;
+    buf = buffer_data(&recvbuf) + total_len - 4;
     mycrc = ntohu32(buf);
-    gotcrc = ssh_crc32(buffer_->data(), total_len - 4);
+    gotcrc = ssh_crc32(buffer_data(&recvbuf), total_len - 4);
 
     if (mycrc != gotcrc) {
       emit packetError(tr("parseData: bad CRC32"));
@@ -141,9 +141,9 @@ void FQTermSSH1PacketReceiver::parseData(FQTermSSHBuffer *input) {
     }
 
     // Drop the padding.
-    buffer_->consume(padding_len);
+    buffer_consume(&recvbuf, padding_len);
 
-    packet_type_ = buffer_->getByte();
+    packet_type_ = buffer_get_u8(&recvbuf);
 
     emit packetAvaliable(packet_type_);
 
