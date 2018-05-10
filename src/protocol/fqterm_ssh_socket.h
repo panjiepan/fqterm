@@ -34,8 +34,6 @@ class FQTermSSHPacketReceiver;
 
 class FQTermSSHPacketSender;
 
-class FQTermSSHBuffer;
-
 class FQTermSSHKex;
 
 class FQTermSSHAuth;
@@ -54,9 +52,8 @@ private:
 
   FQTermSocketPrivate *private_socket_;
 
-  FQTermSSHBuffer *output_buffer_;
-
 	buffer input_buffer;
+	buffer output_buffer;
 	buffer socket_buffer; /* data received from the socket */
 
 
