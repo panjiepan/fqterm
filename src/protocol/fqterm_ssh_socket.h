@@ -54,11 +54,9 @@ private:
 
   FQTermSocketPrivate *private_socket_;
 
-
-  FQTermSSHBuffer *input_buffer_;
-
   FQTermSSHBuffer *output_buffer_;
 
+	buffer input_buffer;
 	buffer socket_buffer; /* data received from the socket */
 
 
