@@ -85,3 +85,30 @@ int buffer_append_be32(buffer *b, uint32_t x)
 		return 0;
 	}
 }
+
+void buffer_get(buffer *b, uint8_t *s, size_t len)
+{
+	memcpy(s, buffer_data(b), len);
+	buffer_consume(b, len);
+}
+
+uint8_t buffer_get_u8(buffer *b)
+{
+	uint8_t c = *buffer_data(b);
+	buffer_consume(b, 1);
+	return c;
+}
+
+uint16_t buffer_get_u16(buffer *b)
+{
+	uint16_t u = be16toh(*(uint16_t*)buffer_data(b));
+	buffer_consume(b, 2);
+	return u;
+}
+
+uint32_t buffer_get_u32(buffer *b)
+{
+	uint32_t u = be32toh(*(uint32_t*)buffer_data(b));
+	buffer_consume(b, 4);
+	return u;
+}

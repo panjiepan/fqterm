@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 #include <stdint.h>
+#include <string.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -34,17 +35,22 @@ static inline size_t buffer_len(buffer *b)
 {
 	return b->sz;
 }
-static inline void buffer_consume(buffer *b, size_t L)
-{
-	b->offs += L;
-	b->sz -= L;
-}
 int buffer_append(buffer *b, const uint8_t *s, size_t len);
 int buffer_append_string(buffer *b, const char *s, size_t len);
 int buffer_append_byte(buffer *b, uint8_t);
 int buffer_append_be16(buffer *b, uint16_t);
 int buffer_append_be32(buffer *b, uint32_t);
 
+/* the following functions doesn't check on buffer size */
+static inline void buffer_consume(buffer *b, size_t L)
+{
+	b->offs += L;
+	b->sz -= L;
+}
+void buffer_get(buffer *b, uint8_t *s, size_t len);
+uint32_t buffer_get_u32(buffer *b);
+uint16_t buffer_get_u16(buffer *b);
+uint8_t buffer_get_u8(buffer *b);
 #ifdef __cplusplus
 }
 #endif
