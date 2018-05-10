@@ -23,8 +23,8 @@
 #include <vector>
 
 #include "fqterm_trace.h"
-#include "fqterm_ssh_buffer.h"
 #include "fqterm_serialization.h"
+#include "fqterm_ssh_buffer.h"
 
 namespace FQTerm {
 //==============================================================================
